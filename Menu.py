@@ -2,7 +2,7 @@
 
 from PyQt4 import QtGui, QtCore
 
-class Menu():
+class Menu(object):
 	def __init__(self, MainUI):
 		
 		self.menu(MainUI)

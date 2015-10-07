@@ -3,7 +3,7 @@
 from PyQt4 import QtGui, QtCore
 #import ff
 
-class ArtistList():
+class ArtistList(object):
 	
 	def __init__(self, MainUI):
 									# po utworzeniu instancji klasy w klasie parent:

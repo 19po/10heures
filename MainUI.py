@@ -2,8 +2,8 @@
 
 from ArtistList import ArtistList
 from Menu import Menu
-from IconClicked import IconClicked
-from IconClicked import Pixmapa
+from ClickedQLabel import ClickedQLabel
+
 import sys
 from PyQt4 import QtGui, QtCore, QtDeclarative, QtWebKit
 
@@ -17,9 +17,8 @@ class MainUI(QtGui.QMainWindow):
 		self.setupUI()
 		Menu(self)
 		ArtistList(self)
-		self.pix = Pixmapa(self)
-		self.timer.timeout.connect(self.pix.hoverButton)
-		self.iconLabel.signalDoubleClick.connect(self.pix.clickButton)
+		self.timer.timeout.connect(self.hoverButton)
+		self.iconLabel.signalDoubleClick.connect(self.clickButton)
 		
 		#self.connect(self.iconLabel, QtCore.SIGNAL('clicked()'), self.openUrl)
 		#self.connect(self.iconLabel, QtCore.SIGNAL('clicked()'), self.openUrl)
@@ -63,10 +62,10 @@ class MainUI(QtGui.QMainWindow):
 		self.timer = QtCore.QTimer()
 		self.timer.start(10)	# stan początkowy, pierwsze wywołanie timera
 		
-		self.iconLabel = IconClicked(self)
+		self.iconLabel = ClickedQLabel(self)
 		self.iconLabel.setToolTip('deezer profile')
-		self.pixmap = QtGui.QPixmap('icon.ico')
-		self.iconLabel.setPixmap(self.pixmap)
+		pixmap = QtGui.QPixmap('icon.ico')
+		self.iconLabel.setPixmap(pixmap)
 		self.iconLabel.setAlignment(QtCore.Qt.AlignRight)
 		
 		# Create the QML user interface.
@@ -129,7 +128,23 @@ class MainUI(QtGui.QMainWindow):
 		url = QtCore.QUrl('http://www.deezer.com/plugins/player?format=square&autoplay=false&playlist=true&width=700&height=290&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&title=&app_id=1')
 		self.squareHtml.load(url)
 		self.squareHtml.show()
-
-
+		
+	def hoverButton(self):
+		if self.iconLabel.underMouse() is True:
+			self.timer.start(10)
+			pixmap = QtGui.QPixmap('icon_hover.ico')
+			self.iconLabel.setPixmap(pixmap)
+		else:
+			pixmap = QtGui.QPixmap('icon.ico')
+			self.iconLabel.setPixmap(pixmap)
+			
+	def clickButton(self):
+		if self.iconLabel.underMouse() is True:
+			self.timer.start(200)
+			pixmap = QtGui.QPixmap('icon_click.ico')
+			self.iconLabel.setPixmap(pixmap)
+		else:
+			pixmap = QtGui.QPixmap('icon.ico')
+			self.iconLabel.setPixmap(pixmap)
 
 

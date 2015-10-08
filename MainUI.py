@@ -21,15 +21,12 @@ class MainUI(QtGui.QMainWindow):
 		self.timer.timeout.connect(self.hoverButton)
 		self.iconLabel.signalDoubleClick.connect(self.clickButton)
 		
-		self.artList.itemDoubleClicked.connect(self.showBottomPanel)
+		self.artList.itemDoubleClicked.connect(self.openClassicPlayer)
+		self.albList.itemDoubleClicked.connect(self.openClassicPlayer)
+		self.sngList.itemDoubleClicked.connect(self.openClassicPlayer)
+		
 		self.hideBottomPanelButton.clicked.connect(self.hideBottomPanelButtonClicked)
 		self.showBottomPanelButton.clicked.connect(self.showBottomPanelButtonClicked)
-		
-		#self.sngList.itemDoubleClicked.connect(self.showRightPanel)
-		#self.hideRightPanelButton.clicked.connect(self.hideRightPanelButtonClicked)
-		#self.showRightPanelButton.clicked.connect(self.showRightPanelButtonClicked)
-		
-		#self.iconLabel.signalDoubleClick.connect(self.openUrl)
 		
 	def setupUI(self):
 			
@@ -93,8 +90,6 @@ class MainUI(QtGui.QMainWindow):
 		self.classicWebView = QtWebKit.QWebView(self.classicLabel)
 		self.classicWebView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
 		self.classicWebView.setVisible(False)
-		classicUrl = "http://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&width=800&height=100&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&title=&app_id=1"
-		self.classicWebView.setUrl(QtCore.QUrl(classicUrl))
 	
 		self.hideBottomPanelButton = QtGui.QPushButton()
 		self.hideBottomPanelButton.setVisible(False)
@@ -105,31 +100,7 @@ class MainUI(QtGui.QMainWindow):
 		self.showBottomPanelButton.setVisible(False)
 		self.showBottomPanelButton.setText('~')
 		self.showBottomPanelButton.setFixedSize(50, 20)
-		
-		#----------------square palyer-----------------
-		
-		#self.squareLabel = QtGui.QLabel()
-		#self.squareLabel.setVisible(False)
-		#self.squareLabel.setFixedSize(250, 250)
-		##self.squareLabel.setFixedHeight(250)
-		#self.squareWebView = QtWebKit.QWebView(self.squareLabel)
-		#self.squareWebView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
-		#self.squareWebView.setVisible(False)
-		##self.squareHtml.setMaximumSize(QtCore.QSize(250, 250))
-		#squareUrl = "http://www.deezer.com/plugins/player?format=square&autoplay=false&playlist=true&width=250&height=250&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&title=&app_id=1"
-		#self.squareWebView.setUrl(QtCore.QUrl(squareUrl)) #default page
-		
-		#self.hideRightPanelButton = QtGui.QPushButton()
-		#self.hideRightPanelButton.setVisible(False)
-		#self.hideRightPanelButton.setText('<')
-		#self.hideRightPanelButton.setFixedSize(20, 50)
-		
-		#self.showRightPanelButton = QtGui.QPushButton()
-		#self.showRightPanelButton.setVisible(False)
-		#self.showRightPanelButton.setText('>')
-		#self.showRightPanelButton.setFixedSize(20, 50)
-
-		
+			
 	# window geometry
 		
 		self.w = 800
@@ -158,25 +129,17 @@ class MainUI(QtGui.QMainWindow):
 		subLayout_2.addWidget(self.classicLabel, 4, 1, 1, 3)
 		subLayout_2.addWidget(self.hideBottomPanelButton, 5, 1, 1, 1)
 		subLayout_2.addWidget(self.showBottomPanelButton, 5, 1, 1, 1)
-		#subLayout_2.addWidget(self.squareLabel, 3, 5, 1, 1)
-		#subLayout_2.addWidget(self.hideRightPanelButton, 3, 6, 1, 1)
-		#subLayout_2.addWidget(self.showRightPanelButton, 3, 6, 1, 1)
 		
 		grid = QtGui.QGridLayout()
 		grid.addWidget(self.iconLabel, 1, 1, 1, 1, QtCore.Qt.AlignRight)
 		grid.addLayout(subLayout_1, 1, 1, 1, 1, QtCore.Qt.AlignLeft)
 		grid.addLayout(subLayout_2, 2, 1, 1, 1)
 		centralWidget.setLayout(grid)
-		
-	#def openUrl(self):
-	#	#url = QtCore.QUrl('http://www.deezer.com/profile/511519725')
-	#	url = QtCore.QUrl('http://www.deezer.com/plugins/player?format=square&autoplay=false&playlist=true&width=700&height=290&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&title=&app_id=1')
-	#	self.squareHtml.load(url)
-	#	self.squareHtml.show()
-	
+
 	#---------------------deezer icon--------------------
 		
 	def hoverButton(self):
+		
 		if self.iconLabel.underMouse() is True:
 			self.timer.start(10)
 			pixmap = QtGui.QPixmap('icon_hover.ico')
@@ -186,48 +149,39 @@ class MainUI(QtGui.QMainWindow):
 			self.iconLabel.setPixmap(pixmap)
 		
 	def clickButton(self):
+		
 		if self.iconLabel.underMouse() is True:
 			self.timer.start(200)
 			pixmap = QtGui.QPixmap('icon_click.ico')
 			self.iconLabel.setPixmap(pixmap)
 			
-			#url = os.system('firefox --new-window "http://www.deezer.com/"')
 			url = "http://www.deezer.com/"
 			webbrowser.open(str(url), new=1, autoraise=True)
 		else:
 			pixmap = QtGui.QPixmap('icon.ico')
 			self.iconLabel.setPixmap(pixmap)	
 	
-	
 	#---------------------classic player--------------------
 	
 	def showBottomPanel(self):
-		self.classicLabel.show()
-		#self.squareLabel.hide()
 		
-		#self.hideRightPanelButton.hide()
-		#self.showRightPanelButton.hide()
+		self.classicLabel.show()
+		self.classicWebView.show()
+		self.hideBottomPanelButton.show()
 		
 		self.classicWebView.resize(self.classicLabel.width(), self.classicLabel.height())
 		
-		self.classicWebView.show()
-		self.hideBottomPanelButton.show()
 		self.animation = QtCore.QPropertyAnimation(self, "geometry")
 		self.animation.setDuration(200)
 		self.animation.setStartValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
 									 self.width(), self.height()))
-		#self.animation.setEasingCurve(QtCore.QEasingCurve.InBack)
 		self.animation.setEndValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
 									self.width(), 700))
 		self.animation.start()
-		
-		
+			
 	def hideBottomPanel(self):
-		self.classicLabel.hide()
-		#self.squareLabel.hide()
 		
-		#self.hideRightPanelButton.hide()
-		#self.showRightPanelButton.hide()
+		self.classicLabel.hide()
 		
 		self.animation = QtCore.QPropertyAnimation(self, "geometry")
 		self.animation.setDuration(500)
@@ -239,63 +193,21 @@ class MainUI(QtGui.QMainWindow):
 		self.animation.start()
 	
 	def hideBottomPanelButtonClicked(self):
+		
 		self.hideBottomPanel()
 		self.hideBottomPanelButton.hide()
 		self.showBottomPanelButton.show()
 		
-	
 	def showBottomPanelButtonClicked(self):
+		
 		self.showBottomPanel()
 		self.hideBottomPanelButton.show()
 		self.showBottomPanelButton.hide()
 	
-	#---------------------square player--------------------
-	#
-	#def showRightPanel(self):
-	#	self.squareLabel.show()
-	#	self.classicLabel.hide()
-	#	
-	#	self.hideBottomPanelButton.hide()
-	#	self.showBottomPanelButton.hide()
-	#	
-	#	self.setMaximumHeight(self.h)
-	#	self.squareWebView.resize(self.width(), self.height())
-	#	
-	#	self.squareWebView.show()
-	#	self.hideRightPanelButton.show()
-	#	self.animation = QtCore.QPropertyAnimation(self, "geometry")
-	#	self.animation.setDuration(500)
-	#	self.animation.setStartValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-	#								 self.width(), self.height()))
-	#	self.animation.setEasingCurve(QtCore.QEasingCurve.InBack)
-	#	self.animation.setEndValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-	#								1050, self.height()))
-	#	self.animation.start()
-	#	
-	#	
-	#def hideRightPanel(self):
-	#	self.squareLabel.hide()
-	#	self.classicLabel.hide()
-	#	
-	#	self.hideBottomPanelButton.hide()
-	#	self.showBottomPanelButton.hide()
-	#
-	#	self.animation = QtCore.QPropertyAnimation(self, "geometry")
-	#	self.animation.setDuration(500)
-	#	self.animation.setStartValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-	#								 self.width(), self.height()))
-	#	self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
-	#	self.animation.setEndValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-	#								self.width()-self.squareLabel.height(), self.height()))
-	#	self.animation.start()
-	#
-	#def hideRightPanelButtonClicked(self):
-	#	self.hideRightPanel()
-	#	self.hideRightPanelButton.hide()
-	#	self.showRightPanelButton.show()
-	#
-	#def showRightPanelButtonClicked(self):
-	#	self.showRightPanel()
-	#	self.hideRightPanelButton.show()
-	#	self.showRightPanelButton.hide()
+	def openClassicPlayer(self):
+		
+		self.showBottomPanel()
+		classicPlayerUrl = "http://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&width=800&height=400&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&title=&app_id=1"
+		self.classicWebView.setUrl(QtCore.QUrl(classicPlayerUrl))
+
 

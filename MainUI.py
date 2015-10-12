@@ -2,13 +2,15 @@
 
 from FillListWidgets import FillListWidgets
 from Menu import Menu
-from ClickedQLabel import DoubleClickedQLabel, ReleaseClickedQLabel
+from ClickedQLabel import DoubleClickedQLabel
 
-import sys, webbrowser#, os
+from DeezerIcon import DeezerIcon
+from BottomPanel import BottomPanel
+
+import sys, webbrowser
 from PyQt4 import QtGui, QtCore, QtWebKit
 
-
-class MainUI(QtGui.QMainWindow):
+class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon):
 	
 	def __init__(self, parent = None):
 	
@@ -29,28 +31,39 @@ class MainUI(QtGui.QMainWindow):
 		self.showBottomPanelButton.clicked.connect(self.showBottomPanelButtonClicked)
 		
 	def setupUI(self):
-			
-	# widgets
-
+		
 		centralWidget = QtGui.QWidget()
-		centralWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Ignored)
 		self.setCentralWidget(centralWidget)
+		
+	#--------------------widgets-------------------
+		
+		#-----------------search-------------------
 		
 		self.searchLabel = QtGui.QLabel()
 		self.searchLabel.setText('Search')
+		
+		self.searchButton = QtGui.QPushButton()
+		self.searchButton.setText('Search')
 		
 		self.searchEdit = QtGui.QLineEdit()
 		self.searchEdit.setMinimumWidth(250)
 		self.searchEdit.setToolTip('Enter artist name, and press Enter')
 		
+		#-----------------list---------------------
+		
 		self.artList = QtGui.QListWidget()
+		self.artList.setMinimumHeight(200)
 		self.artList.setToolTip('Choose the artist')
 
 		self.albList = QtGui.QListWidget()
+		self.albList.setMinimumHeight(200)
 		self.albList.setToolTip('Choose the album')
 		
 		self.sngList = QtGui.QListWidget()
+		self.sngList.setMinimumHeight(200)
 		self.sngList.setToolTip('Choose the song')
+		
+		#--------------list-label-----------------
 		
 		self.artistLabel = QtGui.QLabel()
 		self.artistLabel.setText('Artist')
@@ -61,28 +74,24 @@ class MainUI(QtGui.QMainWindow):
 		self.songLabel = QtGui.QLabel()
 		self.songLabel.setText('Song')
 		
+		#-------------horizontal-line--------------
+		
 		self.hLine = QtGui.QFrame()
 		self.hLine.setFrameShape(QtGui.QFrame.HLine)
 		self.hLine.setFrameShadow(QtGui.QFrame.Sunken)
 		
-		#--------icon-------------
+		#--------------------icon------------------
 		
 		self.timer = QtCore.QTimer()
-		self.timer.start(10)	# stan początkowy, pierwsze wywołanie timera
+		self.timer.start(10)	# timer initial state
 		
 		self.iconLabel = DoubleClickedQLabel(self)
-		self.iconLabel.setToolTip('deezer profile')
+		self.iconLabel.setToolTip('deezer.com')
 		pixmap = QtGui.QPixmap('icon.ico')
 		self.iconLabel.setPixmap(pixmap)
 		self.iconLabel.setAlignment(QtCore.Qt.AlignRight)
-		
-		# Create the QML user interface.
-		#self.iconLabel = QtDeclarative.QDeclarativeView()
-		#self.iconLabel.setToolTip('deezer.com')
-		#self.iconLabel.setSource(QtCore.QUrl('icon.qml')) # wczytanie pliku qml
-		#self.iconLabel.setResizeMode(QtDeclarative.QDeclarativeView.SizeViewToRootObject)
 	
-		#----------------classic palyer-----------------
+		#----------------classic-player------------
 		
 		self.classicLabel = QtGui.QLabel()
 		self.classicLabel.setVisible(False)
@@ -101,21 +110,20 @@ class MainUI(QtGui.QMainWindow):
 		self.showBottomPanelButton.setText('~')
 		self.showBottomPanelButton.setFixedSize(50, 20)
 			
-	# window geometry
+	#----------------window-geometry--------------------
 		
-		self.w = 800
-		self.h = 300 
-		self.setGeometry(300, 300, self.w, self.h)
+		self.setGeometry(300, 300, 800, 300)
 		self.setWindowTitle('Deezer player 1.1')
 		self.setWindowIcon(QtGui.QIcon('icon.ico'))
 		#self.setStyleSheet('background-color: #343434')
 	
-	# grid layout
+	#------------------grid-layout-----------------------
 	
 		subLayout_1 = QtGui.QGridLayout()
 		subLayout_1.setSpacing(5)
 		subLayout_1.addWidget(self.searchLabel, 1, 1, 1, 1, QtCore.Qt.AlignLeft)
 		subLayout_1.addWidget(self.searchEdit, 1, 2, 1, 1, QtCore.Qt.AlignLeft)
+		subLayout_1.addWidget(self.searchButton, 1, 3, 1, 1, QtCore.Qt.AlignLeft)
 		
 		subLayout_2 = QtGui.QGridLayout()
 		subLayout_2.setSpacing(5)
@@ -126,88 +134,18 @@ class MainUI(QtGui.QMainWindow):
 		subLayout_2.addWidget(self.artList, 3, 1, 1, 1)
 		subLayout_2.addWidget(self.albList, 3, 2, 1, 1)
 		subLayout_2.addWidget(self.sngList, 3, 3, 1, 1)
-		subLayout_2.addWidget(self.classicLabel, 4, 1, 1, 3)
-		subLayout_2.addWidget(self.hideBottomPanelButton, 5, 1, 1, 1)
-		subLayout_2.addWidget(self.showBottomPanelButton, 5, 1, 1, 1)
+		
+		subLayout_3 = QtGui.QGridLayout()
+		subLayout_3.setSpacing(5)
+		subLayout_3.addWidget(self.classicLabel, 4, 1, 1, 3)
+		subLayout_3.addWidget(self.hideBottomPanelButton, 5, 1, 1, 1)
+		subLayout_3.addWidget(self.showBottomPanelButton, 5, 1, 1, 1)
 		
 		grid = QtGui.QGridLayout()
 		grid.addWidget(self.iconLabel, 1, 1, 1, 1, QtCore.Qt.AlignRight)
 		grid.addLayout(subLayout_1, 1, 1, 1, 1, QtCore.Qt.AlignLeft)
 		grid.addLayout(subLayout_2, 2, 1, 1, 1)
+		grid.addLayout(subLayout_3, 3, 1, 1, 1)
 		centralWidget.setLayout(grid)
-
-	#---------------------deezer icon--------------------
-		
-	def hoverButton(self):
-		
-		if self.iconLabel.underMouse() is True:
-			self.timer.start(10)
-			pixmap = QtGui.QPixmap('icon_hover.ico')
-			self.iconLabel.setPixmap(pixmap)
-		else:
-			pixmap = QtGui.QPixmap('icon.ico')
-			self.iconLabel.setPixmap(pixmap)
-		
-	def clickButton(self):
-		
-		if self.iconLabel.underMouse() is True:
-			self.timer.start(200)
-			pixmap = QtGui.QPixmap('icon_click.ico')
-			self.iconLabel.setPixmap(pixmap)
-			
-			url = "http://www.deezer.com/"
-			webbrowser.open(str(url), new=1, autoraise=True)
-		else:
-			pixmap = QtGui.QPixmap('icon.ico')
-			self.iconLabel.setPixmap(pixmap)	
-	
-	#---------------------classic player--------------------
-	
-	def showBottomPanel(self):
-		
-		self.classicLabel.show()
-		self.classicWebView.show()
-		self.hideBottomPanelButton.show()
-		
-		self.classicWebView.resize(self.classicLabel.width(), self.classicLabel.height())
-		
-		self.animation = QtCore.QPropertyAnimation(self, "geometry")
-		self.animation.setDuration(200)
-		self.animation.setStartValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-									 self.width(), self.height()))
-		self.animation.setEndValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-									self.width(), 700))
-		self.animation.start()
-			
-	def hideBottomPanel(self):
-		
-		self.classicLabel.hide()
-		
-		self.animation = QtCore.QPropertyAnimation(self, "geometry")
-		self.animation.setDuration(500)
-		self.animation.setStartValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-									 self.width(), self.height()))
-		self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
-		self.animation.setEndValue(QtCore.QRect(self.geometry().x(), self.geometry().y(),
-									self.width(), self.height()-self.classicLabel.height()))
-		self.animation.start()
-	
-	def hideBottomPanelButtonClicked(self):
-		
-		self.hideBottomPanel()
-		self.hideBottomPanelButton.hide()
-		self.showBottomPanelButton.show()
-		
-	def showBottomPanelButtonClicked(self):
-		
-		self.showBottomPanel()
-		self.hideBottomPanelButton.show()
-		self.showBottomPanelButton.hide()
-	
-	def openClassicPlayer(self):
-		
-		self.showBottomPanel()
-		classicPlayerUrl = "http://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&width=800&height=400&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&title=&app_id=1"
-		self.classicWebView.setUrl(QtCore.QUrl(classicPlayerUrl))
 
 

@@ -1,2 +1,3 @@
 # deezer-player
-Deezer player in Python
+Deezer player in Python (PyQt4).
+

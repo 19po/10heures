@@ -55,4 +55,5 @@ class BottomPanel(object):
         classic_player_url = 'http://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&' \
                              'width=800&height=400&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&' \
                              'title=&app_id=1'
+        # classic_player_url = 'https://www.deezer.com'
         self.classicWebView.setUrl(QtCore.QUrl(classic_player_url))

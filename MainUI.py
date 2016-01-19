@@ -45,7 +45,7 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.timer.timeout.connect(self.hover_button)
         self.iconLabel.signalDoubleClick.connect(self.click_button)
 
-        # self.playButton.clicked.connect(self.open_classic_player)
+        self.playButton.clicked.connect(self.open_classic_player)
 
         self.hideBottomPanelButton.clicked.connect(self.hide_bottom_panel_button_clicked)
         self.showBottomPanelButton.clicked.connect(self.show_bottom_panel_button_clicked)
@@ -56,7 +56,7 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.artList.itemDoubleClicked.connect(self.find_alb)
         self.albList.itemDoubleClicked.connect(self.find_sng)
 
-        self.playButton.clicked.connect(self.play_album)
+        # self.playButton.clicked.connect(self.play_album)
 
     def setup_ui(self):
 

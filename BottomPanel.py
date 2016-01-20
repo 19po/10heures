@@ -4,7 +4,6 @@ __author__ = 'postrowski'
 
 from PyQt4 import QtCore
 
-
 class BottomPanel(object):
 
     def __init__(self, parent):
@@ -48,12 +47,3 @@ class BottomPanel(object):
         self.show_bottom_panel()
         self.hideBottomPanelButton.show()
         self.showBottomPanelButton.hide()
-
-    def open_classic_player(self):
-
-        self.show_bottom_panel()
-        classic_player_url = 'http://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&' \
-                             'width=800&height=400&color=1990DB&layout=dark&size=medium&type=playlist&id=30595446&' \
-                             'title=&app_id=1'
-        # classic_player_url = 'https://www.deezer.com'
-        self.classicWebView.setUrl(QtCore.QUrl(classic_player_url))

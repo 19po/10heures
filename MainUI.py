@@ -39,24 +39,32 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.classicWebView = QtWebKit.QWebView(self.classicLabel)
         self.animation = QtCore.QPropertyAnimation(self, "geometry")
 
+        # run setup_ui method and class Menu
         self.setup_ui()
         Menu(self)
 
+        # deezer button timer on hover and on double click
         self.timer.timeout.connect(self.hover_button)
         self.iconLabel.signalDoubleClick.connect(self.click_button)
 
-        self.playButton.clicked.connect(self.open_classic_player)
+        # play album on button single click
+        self.playButton.clicked.connect(self.play_album)
 
+        # hide and show player (Bottom panel) on button single click
         self.hideBottomPanelButton.clicked.connect(self.hide_bottom_panel_button_clicked)
         self.showBottomPanelButton.clicked.connect(self.show_bottom_panel_button_clicked)
 
+        # find artist names on button single click and on item press Enter
         self.searchButton.clicked.connect(self.find_art)
         self.searchEdit.returnPressed.connect(self.find_art)
 
-        self.artList.itemDoubleClicked.connect(self.find_alb)
-        self.albList.itemDoubleClicked.connect(self.find_sng)
+        # find album titles on item single click and on item press Enter
+        self.artList.itemClicked.connect(self.find_alb)
+        self.artList.itemActivated.connect(self.find_alb)
 
-        # self.playButton.clicked.connect(self.play_album)
+        # find song titles on item single click and on item press Enter
+        self.albList.itemClicked.connect(self.find_sng)
+        self.albList.itemActivated.connect(self.find_sng)
 
     def setup_ui(self):
 
@@ -66,8 +74,6 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
 
         central_widget = QtGui.QWidget()
         self.setCentralWidget(central_widget)
-
-        # --------------------widgets-------------------
 
         # -------------------buttons--------------------
 
@@ -127,7 +133,6 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.setGeometry(300, 300, 800, 300)
         self.setWindowTitle("Deezer player")
         self.setWindowIcon(QtGui.QIcon("icon.ico"))
-        # self.setStyleSheet('background-color: #343434')
 
         # ------------------grid-layout-----------------------
 

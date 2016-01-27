@@ -55,16 +55,16 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.showBottomPanelButton.clicked.connect(self.show_bottom_panel_button_clicked)
 
         # find artist names on button single click and on item press Enter
-        self.searchButton.clicked.connect(self.find_art)
-        self.searchEdit.returnPressed.connect(self.find_art)
+        self.searchButton.clicked.connect(self.find_artist)
+        self.searchEdit.returnPressed.connect(self.find_artist)
 
         # find album titles on item single click and on item press Enter
-        self.artList.itemClicked.connect(self.find_alb)
-        self.artList.itemActivated.connect(self.find_alb)
+        self.artList.itemClicked.connect(self.find_album)
+        self.artList.itemActivated.connect(self.find_album)
 
         # find song titles on item single click and on item press Enter
-        self.albList.itemClicked.connect(self.find_sng)
-        self.albList.itemActivated.connect(self.find_sng)
+        self.albList.itemClicked.connect(self.find_song)
+        self.albList.itemActivated.connect(self.find_song)
 
     def setup_ui(self):
 

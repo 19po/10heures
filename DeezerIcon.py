@@ -15,22 +15,21 @@ class DeezerIcon(object):
 
     def hover_button(self):
 
-        if self.iconLabel.underMouse() is True:
+        if self.iconLabel.underMouse():
             self.timer.start(10)
-            pixmap = QtGui.QPixmap("icon_hover.ico")
+            pixmap = QtGui.QPixmap("icon_hover.svg")
             self.iconLabel.setPixmap(pixmap)
         else:
-            pixmap = QtGui.QPixmap("icon.ico")
+            pixmap = QtGui.QPixmap("icon.svg")
             self.iconLabel.setPixmap(pixmap)
 
     def click_button(self):
 
-        if self.iconLabel.underMouse() is True:
+        if self.iconLabel.underMouse():
             self.timer.start(200)
-            pixmap = QtGui.QPixmap("icon_click.ico")
+            pixmap = QtGui.QPixmap("icon_clicked.svg")
             self.iconLabel.setPixmap(pixmap)
-            url = 'http://www.deezer.com'
-            webbrowser.open(str(url), new=1, autoraise=True)
+            webbrowser.open(str("http://www.deezer.com"), new=1, autoraise=True)
         else:
-            pixmap = QtGui.QPixmap("icon.ico")
+            pixmap = QtGui.QPixmap("icon.svg")
             self.iconLabel.setPixmap(pixmap)

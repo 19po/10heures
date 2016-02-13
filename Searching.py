@@ -199,7 +199,7 @@ class Searching(object):
 
         self.load_json(get_alb_tracklist)
 
-        #json_url = urllib.urlopen(get_alb_tracklist)
+        #json_url = urllib.urlopen(get_album_tracklist)
         #data = json.load(json_url)
 
         # -------------get-values-from-json-file----------------

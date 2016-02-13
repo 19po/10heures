@@ -9,213 +9,331 @@ import json
 from collections import OrderedDict
 import re
 
+
 class Search(object):
     def __init__(self, parent):
 
-        self.art_dict_u = {}
-        self.alb_dict = {}
-        self.alb_track_dict = {}
+        self.artist_id_dict = {}
+        self.album_track_dict = {}
+        self.album_cover_big_dict = {}
 
-        self.artList = parent.artList
-        self.albList = parent.albList
-        self.sngList = parent.sngList
+        self.album_dict = {}
+        self.get_album_tracklist = ''
+
+        self.artistList = parent.artList
+        self.albumList = parent.albList
+        self.songList = parent.sngList
         self.searchEdit = parent.searchEdit
-        self.show_bottom_panel = parent.show_bottom_panel
         self.classicWebView = parent.classicWebView
-
-    # -----------find-artist-names------------
+        self.searchButton = parent.searchButton
+        self.playButton = parent.playButton
+        self.coverWebView = parent.coverWebView
 
     def find_artist(self):
         """
         Find artists
         """
-
-        self.artList.clear()
-        self.albList.clear()
-        self.sngList.clear()
+        self.artistList.clear()
+        self.albumList.clear()
+        self.songList.clear()
+        self.searchButton.setDefault(False)  # button focus
 
         # information to user: list is not ready to play album
-        self.albList.setStyleSheet("QListWidget {background-color: None}")
+        self.albumList.setStyleSheet("QListWidget {background-color: None}")
 
         # get input
         get_search_edit = QtCore.QString(unicode(self.searchEdit.text()))
         search_url = u'https://api.deezer.com/search?q={0}'.format(unicode(get_search_edit))
-        print search_url
+
+        # load json file; validate input
+        json_url = ''
+        data = {}
+        try:
+            json_url = urllib.urlopen(search_url)
+            data = json.load(json_url)
+        except IOError:
+            self.artistList.setEnabled(False)
+            self.albumList.setEnabled(False)
+            self.songList.setEnabled(False)
+            self.artistList.addItem("No Internet connection found.")
+            self.albumList.addItem("No Internet connection found.")
+            self.songList.addItem("No Internet connection found.")
+            print("No Internet connection found.")
+
+        # check index; validate input
+        if not data or self.searchEdit.text().isEmpty():
+            return None
+        else:
+            li = len(data["data"])
 
         # console information
         print(u"Search for: {0}".format(unicode(get_search_edit)))
-
-        # open json file
-        json_url = urllib.urlopen(search_url)
-        data = json.load(json_url)
-
-        # check index
-        li = (len(data["data"]))
+        print search_url
 
         # get values from json file
-        art_name_list, art_tracklist_list = [], []  # art_picture_small_list = []
-        alb_title_list, alb_tracklist_list = [], []  # alb_cover_small_list = []
+        artist_name_list, artist_id_list, artist_tracklist_list = [], [], []
+        album_title_list, album_tracklist_list, album_cover_big_list = [], [], []
 
         for i in range(li):
-            art_name = data["data"][i]["artist"]["name"]
-            art_name_list.append(art_name)
+            artist_name = data["data"][i]["artist"]["name"]
+            artist_name_list.append(artist_name)
 
-            # art_picture_small = data["data"][i]["artist"]["picture_small"]
-            # art_picture_small_list.append(art_picture_small)
+            artist_id = data["data"][i]["artist"]["id"]
+            artist_id_list.append(artist_id)
 
-            art_tracklist = data["data"][i]["artist"]["tracklist"]
-            art_tracklist_list.append(art_tracklist)
+            artist_tracklist = data["data"][i]["artist"]["tracklist"]
+            artist_tracklist_list.append(artist_tracklist)
 
-            alb_title = data["data"][i]["album"]["title"]
-            alb_title_list.append(alb_title)
+            album_title = data["data"][i]["album"]["title"]
+            album_title_list.append(album_title)
 
-            # alb_cover_small = data["data"][i]["album"]["cover_small"]
-            # alb_cover_small_list.append(alb_cover_small)
+            album_tracklist = data["data"][i]["album"]["tracklist"]
+            album_tracklist_list.append(album_tracklist)
 
-            alb_tracklist = data["data"][i]["album"]["tracklist"]
-            alb_tracklist_list.append(alb_tracklist)
+            album_cover_big = data["data"][i]["album"]["cover_big"]
+            album_cover_big_list.append(album_cover_big)
 
-        # make dictionary {"artist name": ["artist tracklist", ...], ...}
-        art_dict = {i: [] for i in set(art_name_list)}
-        [art_dict[x].append(y) for (x, y) in zip(art_name_list, art_tracklist_list)]
-        # ...and remove duplicates from values
-        self.art_dict_u = {i: j for (i, j) in zip(art_dict.keys(), [unique(art_dict.values()[i]) for i in
-                                                                    range(len(art_dict.values()))])}
+        json_url.close()
 
-        # make {"art name":[{"album name" : "album tracklist", ...}], ...}
-        out_dict = {i: [] for i in set(art_name_list)}
-        [out_dict[x].append(y) for (x, y) in zip(art_name_list, zip(alb_title_list, alb_tracklist_list))]
-        # ...make inner dictionary...
-        in_dict = [dict(out_dict.values()[i]) for i in range(len(out_dict))]
-        # ...join outer and inner dictionary
-        self.alb_dict = {i: [j] for (i, j) in zip(out_dict.keys(), in_dict)}
+        # make dictionary {"artist name":[{"artist tracklist":"artist id"}], ...}
+        self.artist_id_dict = make_dict(artist_name_list, artist_tracklist_list, artist_id_list)
 
-        [self.artList.addItem(self.alb_dict.keys()[i]) for i in range(len(self.alb_dict))]
+        # make dictionary {"artist name":[{"album tracklist""album name"}], ...}
+        self.album_track_dict = make_dict(artist_name_list, album_tracklist_list, album_title_list)
 
-        return self.art_dict_u, self.alb_dict
+        # make dictionary {"artist name":[{"album_cover_big":"album name"}], ...}
+        self.album_cover_big_dict = make_dict(artist_name_list, album_cover_big_list, album_title_list)
 
-    # ------------find-album-titles-------------
+        # print artists to list widget
+        [self.artistList.addItem(self.artist_id_dict.keys()[i]) for i in range(len(self.artist_id_dict))]
+
+        return self.artist_id_dict, self.album_track_dict, self.album_cover_big_dict
 
     def find_album(self):
         """
         Find artist albums.
         """
-
-        self.albList.clear()
-        self.sngList.clear()
+        self.albumList.clear()
+        self.songList.clear()
 
         # information to user: list is ready to play album
-        self.albList.setStyleSheet("QListWidget {background-color: rgba(10, 20, 128, 30%)}")
+        self.albumList.setStyleSheet("QListWidget {background-color: rgba(10, 20, 128, 30%)}")
 
         # get checked album title
-        get_artist_name = QtCore.QString(unicode(self.artList.currentItem().text()))
+        get_artist_name = QtCore.QString(unicode(self.artistList.currentItem().text()))
         # ...and get his tracklist
-        get_art_tracklist = self.art_dict_u[unicode(get_artist_name)][0]
+        get_artist_tracklist = self.artist_id_dict[unicode(get_artist_name)][0].keys()[0]
 
         # console information
         print(u"Search for {0} albums.".format(unicode(get_artist_name)))
-        print(''.join(get_art_tracklist))  # list to string
+        print(get_artist_tracklist)
 
         # open json file
-        json_url = urllib.urlopen(''.join(get_art_tracklist))  # list to string
+        json_url = urllib.urlopen(get_artist_tracklist)
         data = json.load(json_url)
 
-        # check index
-        li = (len(data["data"]))
-
         # get values from json file
-        alb_title_list, alb_tracklist_list = [], []  # alb_cover_big_list = []
-        for i in range(li):
-            alb_title = data["data"][i]["album"]["title"]
-            alb_title_list.append(alb_title)
+        artist_name_list, artist_id_list, artist_tracklist_list = [], [], []
+        album_title_list, album_tracklist_list, album_cover_big_list = [], [], []
 
-            alb_tracklist = data['data'][i]['album']['tracklist']
-            alb_tracklist_list.append(alb_tracklist)
+        for i in range(len(data["data"])):
+            artist_name = data["data"][i]["artist"]["name"]
+            artist_name_list.append(artist_name)
 
-            # alb_cover_big = data['data'][i]['album']['cover_big']
-            # alb_cover_big_list.append(alb_cover_big)
+            artist_id = data["data"][i]["artist"]["id"]
+            artist_id_list.append(artist_id)
 
-        # get chosen artist albums from previous search
-        prev_album = self.alb_dict[str(get_artist_name)][0].keys()
-        # ...merge and remove duplicates previous and current albums
-        album = []
-        for i in range(len([prev_album + alb_title_list])):
-            album = unique([prev_album + alb_title_list][i])
+            artist_tracklist = data["data"][i]["artist"]["tracklist"]
+            artist_tracklist_list.append(artist_tracklist)
+
+            album_title = data["data"][i]["album"]["title"]
+            album_title_list.append(album_title)
+
+            album_tracklist = data['data'][i]['album']['tracklist']
+            album_tracklist_list.append(album_tracklist)
+
+            album_cover_big = data['data'][i]['album']['cover_big']
+            album_cover_big_list.append(album_cover_big)
+
+        json_url.close()
+
+        # extra album check
+        # same artist names, but different ids'
+
+        # make current dictionary {"artist":[{"artist tracklist":"artist id"}]}
+        current_art_id_dict = make_dict(artist_name_list, artist_tracklist_list, artist_id_list)
+        # merge inner dictionaries {"artist":[{"artist tracklist":"artist id"}]} from previous and current search...
+        # ...make dictionary for current chosen artist {"artist tracklist":"artist id", ...}...
+        new_art_id_dict = dict(current_art_id_dict[unicode(get_artist_name)][0].items() +
+                               self.artist_id_dict[unicode(get_artist_name)][0].items())
+        # delete tracklist used previous (from new_art_id_dict)
+        del new_art_id_dict[''.join(get_artist_tracklist)]  # list to string
+
+        # update tracklist, album and cover
+
+        # make empty lists for new album names
+        album_title_list2, album_tracklist_list2, album_cover_big_list2 = [], [], []
+
+        # check if new_art_id_dict is not empty list
+        if new_art_id_dict:
+            json_url2 = urllib.urlopen(new_art_id_dict.keys()[0])
+            # open json file
+            data2 = json.load(json_url2)
+
+            # get values from json file
+            for i in range(len(data2["data"])):
+                album_title2 = data2["data"][i]["album"]["title"]
+                album_title_list2.append(album_title2)
+
+                album_tracklist2 = data2['data'][i]['album']['tracklist']
+                album_tracklist_list2.append(album_tracklist2)
+
+                album_cover_big2 = data2['data'][i]['album']['cover_big']
+                album_cover_big_list2.append(album_cover_big2)
+
+            json_url2.close()
+
+        # get chosen artist albums titles from previous search
+        prev_album = self.album_track_dict[unicode(get_artist_name)][0].values()
 
         # get chosen artist album tracklist from previous search
-        prev_alb_track = self.alb_dict[str(get_artist_name)][0].values()
-        # ...merge and remove duplicates previous and current albums
-        album_track = ''
-        for i in range(len([prev_alb_track + alb_tracklist_list])):
-            album_track = unique([prev_alb_track + alb_tracklist_list][i])
+        prev_album_tracklist = self.album_track_dict[unicode(get_artist_name)][0].keys()
 
-        # paste albums to list
-        [self.albList.addItem(album[i]) for i in range(len(album))]
+        # get chosen artist album cover from previous search
+        prev_album_cover = self.album_cover_big_dict[unicode(get_artist_name)][0].keys()
 
-        # make dictionary {"album title" : "album tracklist"}
-        self.alb_track_dict = {i: j for (i, j) in zip(album, album_track)}
+        # make and/or update new_album_title list with album names from previous and current search
 
-        return self.alb_track_dict
+        # check if album_title_list2 is not empty list
+        if album_title_list2:
+            # make dictionary {"album tracklist":[{"album title":"album cover"}], ...}
+            self.album_dict = make_dict(prev_album_tracklist + album_tracklist_list + album_tracklist_list2,
+                                        prev_album + album_title_list + album_title_list2,
+                                        prev_album_cover + album_cover_big_list + album_cover_big_list2)
+            # update album names and print it to list widget
+            self.update_album(self.album_dict)
+
+        else:
+            # make dictionary {"album tracklist":[{"album title":"album cover"}], ...}
+            self.album_dict = make_dict(prev_album_tracklist + album_tracklist_list,
+                                        prev_album + album_title_list,
+                                        prev_album_cover + album_cover_big_list)
+            # update album names and print it to list widget
+            self.update_album(self.album_dict)
+
+        return self.album_dict
 
     def find_song(self):
         """
         Find album songs.
         """
+        self.songList.clear()
 
-        self.sngList.clear()
-
-        # get checked album title
-        get_alb_name = QtCore.QString(unicode(self.albList.currentItem().text()))
-        # ...and get his tracklist
-        get_alb_tracklist = self.alb_track_dict[unicode(get_alb_name)]
+        # get checked album title...
+        get_alb_name = QtCore.QString(unicode(self.albumList.currentItem().text()))
+        # ...and get his tracklist (two or more same album names; need to iterate by indexes)
+        row = self.albumList.currentRow()
+        self.get_album_tracklist = ''.join([y for x, y in enumerate(self.album_dict.keys()) if row is x])
 
         # console information
         print(u"Search for tracks from {0}.".format(unicode(get_alb_name)))
-        print(get_alb_tracklist)
+        print(self.get_album_tracklist)
 
         # open json file
-        json_url = urllib.urlopen(get_alb_tracklist)
+        json_url = urllib.urlopen(self.get_album_tracklist)
         data = json.load(json_url)
-
-        # check index
-        li = (len(data["data"]))
 
         # get values from json file
         sng_title_list = []
-        for i in range(li):
+
+        for i in range(len(data["data"])):
             sng_title = data["data"][i]["title"]
             sng_title_list.append(sng_title)
 
+        json_url.close()
+
         # paste songs to list
-        [self.sngList.addItem(sng_title_list[i]) for i in range(len(sng_title_list))]
+        [self.songList.addItem(sng_title_list[i]) for i in range(len(sng_title_list))]
+
+        return self.get_album_tracklist
 
     def play_album(self):
 
         """
         Play chosen album.
         """
-        # get checked song title
-        get_alb_name = QtCore.QString(unicode(self.albList.currentItem().text()))
-        # .. and get his tracklist
-        get_alb_id = self.alb_track_dict[unicode(get_alb_name)]
+        # change size of classicWebView (single or album)
+        if self.songList.count() is 1:
+            self.classicWebView.setMinimumHeight(92)
+        else:
+            self.classicWebView.setMinimumHeight(400)
+
+        # self.playButton.setDefault(False)  # button focus
+        # get checked song title...
+        # validate input: if nothing in albumList is checked
+        item = self.albumList.count()
+        if not [i for i in range(item) if self.albumList.isItemSelected(self.albumList.item(i))]:
+            return None
+        else:
+            get_alb_name = QtCore.QString(unicode(self.albumList.currentItem().text()))
 
         # console information
         print(u"Play tracks from {0}.".format(unicode(get_alb_name)))
 
         # find album id in tracklist
-        alb_id = re.search('(.*)album/(.*)/tracks(.*)', get_alb_id).group(2)
+        alb_id = re.search('album/(.*)/tracks', self.get_album_tracklist).group(1)
 
         # open deezer widget
-        artist_player_url = 'http://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&' \
-                            'width=700&height=350&color=007FEB&layout=dark&size=medium&type=album&id={0}&' \
-                            'title=&app_id=1'.format(alb_id)
-        self.classicWebView.setUrl(QtCore.QUrl(artist_player_url))
+        player_url = 'http://www.deezer.com/plugins/player?format=classic&autoplay=false&playlist=true&' \
+                     'width=700&height=350&color=007FEB&layout=dark&size=medium&type=album&id={0}&' \
+                     'title=&app_id=1'.format(alb_id)
+        self.classicWebView.setUrl(QtCore.QUrl(player_url))
 
-        self.show_bottom_panel()
+    def show_cover(self):
+        """
+        Show album cover.
+        """
+        # get checked album title...
+        get_alb_name = QtCore.QString(unicode(self.albumList.currentItem().text()))
+        # ...and get his cover
+        get_alb_cover = self.album_dict[self.get_album_tracklist][0].values()[0]
+
+        print(u"Cover url {0}.".format(get_alb_cover))
+        self.coverWebView.load(QtCore.QUrl(get_alb_cover))
+
+    def update_album(self, a_dict):
+        """
+            Method make list with new album names and adds it to album list widget.
+        """
+        # get album names from dict
+        a = []
+        for i in range(len(a_dict)):
+            for j in range(len(a_dict.values()[i])):
+                a.append(a_dict.values()[i][j].keys())
+        new_a = sum(a, [])  # remove one dimension
+        # add album names to list widget
+        [self.albumList.addItem(new_a[i]) for i in range(len(new_a))]
+
+def make_dict(list1, list2, list3):
+    """
+    Function makes a dictionary.
+    :param list1: input list (keys())
+    :param list2: input list (nested keys())
+    :param list3: input list (nested values())
+    :return: output dictionary ({"list1":[{"list2":"list3"}], ...})
+    """
+    # make dictionary {"list1":[{"list2":"list3"}], ...}
+    out_dict = {i: [] for i in set(list1)}
+    [out_dict[x].append(y) for (x, y) in zip(list1, zip(list2, list3))]
+    # ...make inner dictionary...
+    in_dict = [dict(out_dict.values()[i]) for i in range(len(out_dict))]
+    # ...join outer and inner dictionary
+    new_dict = {i: [j] for (i, j) in zip(out_dict.keys(), in_dict)}
+    return new_dict
 
 def unique(z):
     """
-    Function remove duplicates from list.
+    Function removes duplicates from list.
     :param z: input list
     :return: output list without duplicates
     """

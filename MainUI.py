@@ -1,17 +1,15 @@
+from PyQt4 import QtGui, QtCore, QtWebKit
+from Menu import Menu
+from ClickedQLabel import DoubleClickedQLabel
+from DeezerIcon import DeezerIcon
+from Search import Search
+
 __author__ = 'postrowski'
 
 # -*-coding: utf-8-*-
 
-from PyQt4 import QtGui, QtCore, QtWebKit
 
-from Menu import Menu
-from ClickedQLabel import DoubleClickedQLabel
-from DeezerIcon import DeezerIcon
-from BottomPanel import BottomPanel
-from Search import Search
-from WaitOverlay import WaitOverlay
-
-class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
+class MainUI(QtGui.QMainWindow, DeezerIcon):
 
     def __init__(self, parent=None):
 
@@ -19,8 +17,9 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
 
         self.searchButton = QtGui.QPushButton()
         self.playButton = QtGui.QPushButton()
-        self.showBottomPanelButton = QtGui.QPushButton()
-        self.hideBottomPanelButton = QtGui.QPushButton()
+        self.showButton = QtGui.QPushButton()
+        self.hideButton = QtGui.QPushButton()
+        self.pageButton = QtGui.QPushButton()
 
         self.iconLabel = DoubleClickedQLabel(self)
         self.searchLabel = QtGui.QLabel()
@@ -38,14 +37,9 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.classicWebView = QtWebKit.QWebView()
         self.coverWebView = QtWebKit.QWebView()
 
-        self.animation = QtCore.QPropertyAnimation(self, "geometry")
-
-        # self.overlay = WaitOverlay(self)
-        # self.overlay.hide()
-        # self.artistList.itemActivated.connect(self.overlay.show)
-
         self.setup_ui()
         Menu(self)
+        self.search = Search(self)
 
         # ------------------------------------------------------------
 
@@ -53,59 +47,60 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.timer.timeout.connect(self.hover_button)
         self.iconLabel.signalDoubleClick.connect(self.click_button)
 
-        # play album on button single click and press Enter
-        self.playButton.clicked.connect(self.play_album)
-        self.playButton.pressed.connect(self.play_album)
-
         # hide and show player (Bottom panel) on button single click
-        self.hideBottomPanelButton.clicked.connect(self.hide_bottom_panel_button_clicked)
-        self.showBottomPanelButton.clicked.connect(self.show_bottom_panel_button_clicked)
-        self.playButton.pressed.connect(self.show_bottom_panel_button_clicked)
+        self.hideButton.clicked.connect(self.search.hide_button_clicked)
+        self.showButton.clicked.connect(self.search.show_button_clicked)
+
+        # play album on button single click and press Enter
+        self.playButton.clicked.connect(self.search.play_album)
+        self.playButton.pressed.connect(self.search.play_album)
 
         # find artist names on button single click and on item press Enter
-        self.searchButton.clicked.connect(self.find_artist)
-        self.searchEdit.returnPressed.connect(self.find_artist)
+        self.searchButton.clicked.connect(self.search.run_artist_thread)
+        self.searchEdit.returnPressed.connect(self.search.run_artist_thread)
 
         # find album titles on item single click and on item press Enter
-        self.artistList.itemClicked.connect(self.find_album)
-        self.artistList.itemActivated.connect(self.find_album)
+        self.artistList.itemClicked.connect(self.search.run_album_thread)
+        self.artistList.itemActivated.connect(self.search.run_album_thread)
 
-        # find song titles on item single click and on item press Enter
-        self.albumList.itemClicked.connect(self.find_song)
-        self.albumList.itemActivated.connect(self.find_song)
+        # find song titles and show album cover on item single click and on item press Enter
+        self.albumList.itemClicked.connect(self.search.run_song_thread)
+        self.albumList.itemActivated.connect(self.search.run_song_thread)
+        self.coverWebView.loadFinished.connect(self.search.cover_loaded)
 
-        # show album cover on item single click and on item press Enter
-        self.albumList.itemClicked.connect(self.show_cover)
-        self.albumList.itemActivated.connect(self.show_cover)
+        # go to album page on deezer.com on single click and press Enter
+        self.pageButton.clicked.connect(self.search.listen_on)
+        self.pageButton.pressed.connect(self.search.listen_on)
 
     def setup_ui(self):
 
         """
-        setup method
+            Setup widgets.
         """
-        central_widget = QtGui.QWidget()
-        self.setCentralWidget(central_widget)
+        self.central_widget = QtGui.QWidget()
+        self.setCentralWidget(self.central_widget)
 
-        # -------------------buttons--------------------
-
+        # button
         self.searchButton.setText("Search")
         self.searchButton.setAutoDefault(True)  # button focus
 
         self.playButton.setText("Play album")
         self.playButton.setAutoDefault(True)  # button focus
 
-        self.hideBottomPanelButton.setVisible(False)
-        self.hideBottomPanelButton.setText("^")
-        self.hideBottomPanelButton.setFixedSize(50, 20)
-        self.hideBottomPanelButton.setAutoDefault(True)  # button focus
+        self.hideButton.hide()
+        self.hideButton.setText("hide")
+        self.hideButton.setAutoDefault(True)  # button focus
 
-        self.showBottomPanelButton.setVisible(False)
-        self.showBottomPanelButton.setText("~")
-        self.showBottomPanelButton.setFixedSize(50, 20)
-        self.showBottomPanelButton.setAutoDefault(True)  # button focus
+        self.showButton.hide()
+        self.showButton.setText("show")
+        self.showButton.setAutoDefault(True)  # button focus
 
-        # -------------------labels-------------------
+        self.pageButton.hide()
+        self.pageButton.setText("listen")
+        self.pageButton.setToolTip("Listen album on deezer.com")
+        self.pageButton.setAutoDefault(True)  # button focus
 
+        # label
         self.iconLabel.setToolTip("deezer.com")
         pixmap = QtGui.QPixmap("icon.svg")
         self.iconLabel.setPixmap(pixmap)
@@ -117,7 +112,7 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.albumLabel.setText("Album")
         self.songLabel.setText("Song")
 
-        # -------------------lists--------------------
+        # list
         self.artistList.setMinimumHeight(300)
         self.artistList.setToolTip("Choose the artist")
         self.albumList.setMinimumHeight(300)
@@ -125,8 +120,7 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.songList.setMinimumHeight(300)
         self.songList.setToolTip("Choose the song")
 
-        # -------------------others-------------------
-
+        # --
         self.searchEdit.setMinimumWidth(250)
         self.searchEdit.setToolTip("Enter artist name, and press Enter")
 
@@ -135,23 +129,22 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         self.hLine.setFrameShape(QtGui.QFrame.HLine)
         self.hLine.setFrameShadow(QtGui.QFrame.Sunken)
 
+        # web view
         self.classicWebView.hide()
-        self.classicWebView.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.classicWebView.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         self.classicWebView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         self.classicWebView.settings().setMaximumPagesInCache(0)
 
         self.coverWebView.setFixedSize(300, 300)
         self.coverWebView.settings().setMaximumPagesInCache(0)
 
-        # ----------------window-geometry--------------------
-
+        # window geometry
         self.setGeometry(300, 100, 1200, 400)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
         self.setWindowTitle("10heures player")
-        self.setWindowIcon(QtGui.QIcon("icon.svg"))
+        self.setWindowIcon(QtGui.QIcon("images/icon.svg"))
 
-        # ------------------grid-layout-----------------------
-
+        # grid layout
         sub_layout_1 = QtGui.QGridLayout()
         sub_layout_1.setSpacing(5)
         sub_layout_1.addWidget(self.searchLabel, 1, 1, 1, 1, QtCore.Qt.AlignLeft)
@@ -159,37 +152,41 @@ class MainUI(QtGui.QMainWindow, BottomPanel, DeezerIcon, Search):
         sub_layout_1.addWidget(self.searchButton, 1, 3, 1, 1, QtCore.Qt.AlignLeft)
         sub_layout_1.addWidget(self.playButton, 1, 4, 1, 1, QtCore.Qt.AlignLeft)
 
-        sub_layout_2 = QtGui.QGridLayout()
-        sub_layout_2.setSpacing(5)
-        sub_layout_2.addWidget(self.hLine, 1, 1, 1, 4)
-        sub_layout_2.addWidget(self.artistLabel, 2, 1, 1, 1)
-        sub_layout_2.addWidget(self.albumLabel, 2, 2, 1, 1)
-        sub_layout_2.addWidget(self.songLabel, 2, 3, 1, 1)
-        sub_layout_2.addWidget(self.artistList, 3, 1, 1, 1)
-        #sub_layout_2.addWidget(self.overlay, 3, 1, 1, 1)
-        sub_layout_2.addWidget(self.albumList, 3, 2, 1, 1)
-        sub_layout_2.addWidget(self.songList, 3, 3, 1, 1)
-        sub_layout_2.addWidget(self.coverWebView, 3, 4, 1, 1)
+        self.sub_layout_2 = QtGui.QGridLayout()
+        self.sub_layout_2.setSpacing(5)
+        self.sub_layout_2.addWidget(self.hLine, 1, 1, 1, 4)
+        self.sub_layout_2.addWidget(self.artistLabel, 2, 1, 1, 1)
+        self.sub_layout_2.addWidget(self.albumLabel, 2, 2, 1, 1)
+        self.sub_layout_2.addWidget(self.songLabel, 2, 3, 1, 1)
+        self.sub_layout_2.addWidget(self.artistList, 3, 1, 1, 1)
+        self.sub_layout_2.addWidget(self.albumList, 3, 2, 1, 1)
+        self.sub_layout_2.addWidget(self.songList, 3, 3, 1, 1)
+        self.sub_layout_2.addWidget(self.coverWebView, 3, 4, 1, 1)
 
         sub_layout_3 = QtGui.QGridLayout()
         sub_layout_3.setSpacing(5)
         sub_layout_3.addWidget(self.classicWebView, 4, 1, 1, 1)
-        sub_layout_3.addWidget(self.hideBottomPanelButton, 5, 1, 1, 1, QtCore.Qt.AlignLeft)
-        sub_layout_3.addWidget(self.showBottomPanelButton, 5, 1, 1, 1, QtCore.Qt.AlignLeft)
+
+        sub_layout_4 = QtGui.QGridLayout()
+        sub_layout_4.setSpacing(5)
+        sub_layout_4.addWidget(self.hideButton, 5, 1, 1, 1, QtCore.Qt.AlignLeft)
+        sub_layout_4.addWidget(self.showButton, 5, 1, 1, 1, QtCore.Qt.AlignLeft)
+        sub_layout_4.addWidget(self.pageButton, 5, 2, 1, 1, QtCore.Qt.AlignLeft)
 
         grid = QtGui.QGridLayout()
         grid.addWidget(self.iconLabel, 1, 1, 1, 1, QtCore.Qt.AlignRight)
         grid.addLayout(sub_layout_1, 1, 1, 1, 1, QtCore.Qt.AlignLeft)
-        grid.addLayout(sub_layout_2, 2, 1, 1, 1)
+        grid.addLayout(self.sub_layout_2, 2, 1, 1, 1)
         grid.addLayout(sub_layout_3, 3, 1, 1, 1)
-        central_widget.setLayout(grid)
+        grid.addLayout(sub_layout_4, 4, 1, 1, 1, QtCore.Qt.AlignLeft)
+        self.central_widget.setLayout(grid)
 
-        # ------------tab-order-----------------
-
+        # tab order
         self.setTabOrder(self.searchEdit, self.searchButton)
         self.setTabOrder(self.searchButton, self.artistList)
         self.setTabOrder(self.artistList, self.albumList)
         self.setTabOrder(self.albumList, self.songList)
-        self.setTabOrder(self.songList, self.showBottomPanelButton)
-        self.setTabOrder(self.showBottomPanelButton, self.hideBottomPanelButton)
-        self.setTabOrder(self.hideBottomPanelButton, self.playButton)
+        self.setTabOrder(self.songList, self.showButton)
+        self.setTabOrder(self.showButton, self.hideButton)
+        self.setTabOrder(self.hideButton, self.pageButton)
+        self.setTabOrder(self.pageButton, self.playButton)
